@@ -1,4 +1,4 @@
-const aggFreqs = require('./freq');
+const aggFreqs = require('./aggFreqs');
 
 test('test frequency aggregation', () => {
   expect(aggFreqs(['+1', '+1', '+1'])).toBe(3);

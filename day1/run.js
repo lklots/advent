@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
-const aggFreqs = require('./freq');
+const aggFreqs = require('./aggFreqs');
 
 const readFile = util.promisify(fs.readFile);
 
