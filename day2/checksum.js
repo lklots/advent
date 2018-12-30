@@ -17,11 +17,33 @@ Multiplying these together produces a checksum of 4 * 3 = 12.
 */
 
 function counts(id) {
-  return [0, 0];
+  const counting = {};
+  for (let i = 0; i < id.length; i += 1) {
+    counting[id[i]] = (counting[id[i]] || 0) + 1;
+  }
+  let twos = 0;
+  let threes = 0;
+
+  Object.values(counting).forEach((count) => {
+    if (count === 2) {
+      twos = 1;
+    } else if (count === 3) {
+      threes = 1;
+    }
+  });
+
+  return [twos, threes];
 }
 
 function checksum(ids) {
-  return 12;
+  let twosTotal = 0;
+  let threesTotal = 0;
+  ids.forEach((id) => {
+    const [twos, threes] = counts(id);
+    twosTotal += twos;
+    threesTotal += threes;
+  });
+  return twosTotal * threesTotal;
 }
 
 module.exports = {
