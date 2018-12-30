@@ -23,7 +23,23 @@ Here are other examples:
 
 */
 function repeatFreqs(freqs) {
-  return 0;
+  const seen = {
+    0: true,
+  };
+  let total = 0;
+  while (true) {
+    for (let i = 0; i < freqs.length; i += 1) {
+      // +N will be interepted as N.
+      // -N will be interepted as -N.
+      const value = parseInt(freqs[i], 10);
+      total += value;
+      if (total in seen) {
+        return total;
+      }
+
+      seen[total] = true;
+    }
+  }
 }
 
 module.exports = repeatFreqs;
