@@ -31,7 +31,8 @@ test('test overlapping claims', () => {
 });
 
 test('count number of overlapping claims', () => {
-  expect(allClaims([{
+  const map = new Map();
+  expect(allClaims(map, [{
     x: 0,
     y: 0,
     width: 1,

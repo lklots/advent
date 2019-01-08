@@ -15,8 +15,7 @@ function claim(map, c) {
   return alreadyClaimed;
 }
 
-function allClaims(claims) {
-  const map = new Map();
+function allClaims(map, claims) {
   claims.forEach((c) => {
     claim(map, c);
   });
