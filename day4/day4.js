@@ -6,6 +6,17 @@ const fs = require('fs');
 
 const readFile = util.promisify(fs.readFile);
 
+function maxMinute(minutes) {
+  return Object.keys(minutes).reduce((a, b) => (minutes[a] > minutes[b] ? a : b), 0);
+}
+
+function maxMinuteAndValue(minutes) {
+  if (!Object.keys(minutes).length) {
+    return ['0', 0];
+  }
+  return Object.keys(minutes).reduce(([a, _], b) => (minutes[a] > minutes[b] ? [a, minutes[a]] : [b, minutes[b]]));
+}
+
 async function run() {
   const file = await readFile(path.join(__dirname, 'input.txt'));
   const records = file.toString().split('\n');
@@ -32,7 +43,7 @@ async function run() {
     } else if (wakeup) {
       const currentWakeup = parseInt(wakeup[1], 10);
       guards[currentGuard].total += currentWakeup - currentAsleep;
-      for (let j = currentAsleep; j < currentWakeup; j++) {
+      for (let j = currentAsleep; j < currentWakeup; j += 1) {
         if (!guards[currentGuard].minutes[j]) {
           guards[currentGuard].minutes[j] = 1;
         } else {
@@ -42,15 +53,16 @@ async function run() {
       currentAsleep = null;
     }
   }
-  const maxGuardId = Object.keys(guards).reduce((a, b) => {
-    return guards[a].total > guards[b].total ? a : b;
-  });
+  const maxGuardId = Object.keys(guards).reduce((a, b) => (guards[a].total > guards[b].total ? a : b));
   const maxGuard = guards[maxGuardId];
-  const maxMinute = Object.keys(maxGuard.minutes).reduce((a, b) => {
-    return maxGuard.minutes[a] > maxGuard.minutes[b] ? a : b;
-  });
 
-  console.log(`${maxGuardId} * ${maxMinute}=${maxMinute * maxGuardId}`);
+  console.log(`startegy 1: ${maxMinute(maxGuard.minutes) * maxGuardId}`);
+  Object.keys(guards).forEach((g) => {
+    guards[g] = maxMinuteAndValue(guards[g].minutes);
+  });
+  const newMax = Object.keys(guards).reduce((a, b) => (guards[a][1] > guards[b][1] ? a : b));
+  console.log(`strategy 2: ${newMax * guards[newMax][0]}`);
+
 }
 
 run();
