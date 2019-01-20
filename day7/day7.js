@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 
-const util = require('util');
-const path = require('path');
-const fs = require('fs');
-
-const readFile = util.promisify(fs.readFile);
+const readInput = require('../lib/file');
 
 function topoSort(nodes, depsFromTo, depsToFrom) {
   let sorted = [];
@@ -40,8 +36,7 @@ async function run() {
   const depsFromTo = new Map();
   const depsToFrom = new Map();
   const nodes = new Set();
-  const contents = await readFile(path.join(__dirname, 'input.txt'));
-  contents.toString().split('\n').forEach((line) => {
+  (await readInput(__dirname)).split('\n').forEach((line) => {
     const matches = line.match(/Step ([A-Z]) must be finished before step ([A-Z])/);
     if (matches) {
       const [_, to, from] = matches;
