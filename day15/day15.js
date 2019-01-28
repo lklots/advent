@@ -35,6 +35,15 @@ function serialize(coord) {
   return `${coord[0]},${coord[1]}`;
 }
 
+// HACK
+function dedupe(arr) {
+  const map = new Map();
+  arr.forEach((coord) => {
+    map.set(`${coord[0]},${coord[1]}`, coord);
+  });
+  return new Array(...map.values())
+}
+
 function printGrid(grid, units, coords = []) {
   const newGrid = grid.map(x => x.slice()).slice();
   coords.forEach((coord) => {
@@ -55,12 +64,14 @@ function bfs(grid, start, ends) {
     q.forEach((node) => {
       visited[serialize(node)] = true;
     });
+
     if (q.some(n => terminals.find(x => x === serialize(n)))) {
       return length;
     }
 
     q = q.map(n => nearbyCoord(n)).flat();
     q = q.filter(coord => grid[coord[1]][coord[0]] === '.' && !visited[serialize(coord)]);
+    q = dedupe(q);
     length += 1;
   }
   return null;
@@ -130,10 +141,7 @@ class Grid {
 
   act(unit) {
     if (!this.attack(unit)) {
-      const startT = Date.now();
-      const couldMove = this.move(unit);
-      console.log(`move took ${(Date.now()-startT)/1000} seconds`);
-      if (!couldMove) {
+      if (!this.move(unit)) {
         return false;
       }
       this.attack(unit);
@@ -150,7 +158,6 @@ class Grid {
   move(unit) {
     const enemies = this.units.filter(x => x instanceof unit.enemy);
     const range = enemies.map(u => nearbyUnit(u).filter(coord => this.grid[coord[1]][coord[0]] === '.')).flat();
-
     if (!range.length) {
       return false;
     }
