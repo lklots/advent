@@ -46,7 +46,7 @@ function simulate(players, maxMarble) {
 }
 
 simulate(10, 1618); // 8317
-simulate(13, 7999); // 146373
+simulate(13, 7999); // 146373??
 simulate(17, 1104); // 2764
 simulate(21, 6111); // 54718
 simulate(30, 5807); // 37305
