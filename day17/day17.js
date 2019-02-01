@@ -82,23 +82,18 @@ function fillOrSource(map, start, maxY) {
   }
   return sources;
 }
-// # + | . ~
+
 function drop(map, source, maxY) {
   let [x, y] = source;
   while (get(map, x, y) === '.' || get(map, x, y) === '+' || get(map, x, y) === '|') {
-    if (get(map, x, y) !== '+') {
-      set(map, x, y, '|');
-    }
+    set(map, x, y, '|');
     y += 1;
     if (y > maxY) {
-      return [];
+      return null;
     }
   }
   const sources = fillOrSource(map, [x, y - 1], maxY);
   sources.push(source);
-  if (!sources.length) {
-    return [source];
-  }
   return sources;
 }
 
@@ -152,12 +147,20 @@ async function run() {
   let check = 0;
   while (stack.length) {
     check += 1;
-    stack = unique(stack.concat(drop(map, stack.shift(), maxY)));
-    if (check % 100 === 0) {
+    const ret = drop(map, stack.shift(), maxY);
+    if (check % 1000 === 0) {
       print(map, minX);
       console.log(stack);
       console.log('\n\n\n\n\n\n\n');
     }
+    if (ret === null) {
+      print(map, minX);
+      console.log(stack);
+      console.log('\n\n\n\n\n\n\n');
+      return;
+    }
+    stack = unique(stack.concat(ret));
+
   }
 }
 
