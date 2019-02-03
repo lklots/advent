@@ -40,7 +40,7 @@ function printMap(map) {
 async function run() {
   const map = new Map();
   (await readFile(__dirname)).split('\n').forEach((line) => {
-    const matches = line.match(/position=< ?(-?\d+),  ?(-?\d+)> velocity=< ?(-?\d), ?(-?\d)>/);
+    const matches = line.match(/position=< ?(-?\d+),  ?(-?\d+)> velocity=< ?(-?\d),[ ]*(-?\d)>/);
     if (matches) {
       let [_, x, y, vx, vy] = matches;
       x = parseInt(x, 10);
@@ -48,6 +48,8 @@ async function run() {
       vx = parseInt(vx, 10);
       vy = parseInt(vy, 10);
       map.set([x, y], [vx, vy]);
+    } else {
+      console.log(line);
     }
   });
   printMap(advance(map, 10886));
