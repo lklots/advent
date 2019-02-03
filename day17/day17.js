@@ -1,11 +1,22 @@
 #!/usr/local/bin/node
-
+// WRONG ANSWER
 const readFile = require('../lib/file');
+
+function count(map) {
+  let total = 0;
+  for (let i = 0; i < map.length; i += 1) {
+    for (let j = 0; j < map[j].length; j += 1) {
+      if (map[i][j] === '|' || map[i][j] === '~' || map[i][j] === '+') {
+        total += 1;
+      }
+    }
+  }
+  return total;
+}
 
 function print(map, minX) {
   let out = '';
   for (let i = 0; i < map.length; i += 1) {
-    out += i;
     if (!map[i]) {
       out += '..................';
     } else {
@@ -74,12 +85,13 @@ function fillOrSource(map, start, maxY) {
   }
 
   const sources = [];
-  if (!leftBound) {
-    sources.push([x1, y]);
-  }
   if (!rightBound) {
     sources.push([x2, y]);
   }
+  if (!leftBound) {
+    sources.push([x1, y]);
+  }
+
   return sources;
 }
 
@@ -106,8 +118,20 @@ function unique(arr) {
   return new Array(...map.values());
 }
 
+function stream(map, sources, maxY) {
+  while (sources.length) {
+    const source = sources.shift();
+    const ret = drop(map, source, maxY);
+    if (ret === null) {
+      // a stream hit maxY.
+      return sources;
+    }
+    sources = unique(sources.concat(ret));
+  }
+}
+
 async function run() {
-  const lines = (await readFile(__dirname, 'input.txt')).split('\n');
+  const lines = (await readFile(__dirname, 'input3.txt')).split('\n');
 
   const map = [];
   const mins = [];
@@ -143,25 +167,16 @@ async function run() {
     map[0] = [];
   }
   map[0][500] = '+';
-  let stack = [[500, 0]];
-  let check = 0;
-  while (stack.length) {
-    check += 1;
-    const ret = drop(map, stack.shift(), maxY);
-    if (check % 1000 === 0) {
-      print(map, minX);
-      console.log(stack);
-      console.log('\n\n\n\n\n\n\n');
-    }
-    if (ret === null) {
-      print(map, minX);
-      console.log(stack);
-      console.log('\n\n\n\n\n\n\n');
-      return;
-    }
-    stack = unique(stack.concat(ret));
-
+  let origins = stream(map, [[500, 0]], maxY);
+  // HACK: keep going for a few more iteration to make sure
+  //       everything is filled. ideally, the size of the largest
+  //       bucket. 
+  for (let i = 0; i < 100; i += 1) {
+    origins = stream(map, origins, maxY);
   }
+  print(map, minX);
+  console.log('\n\n\n\n\n\n\n');
+  console.log(count(map));
 }
 
 run();
