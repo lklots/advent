@@ -19,6 +19,11 @@ function pad(state) {
       state.unshift('.');
       state.zeroPotIndex += 1;
     }
+  } else {
+    for (let i = 0; i < leftMost - 5; i += 1) {
+      state.shift();
+    }
+    state.zeroPotIndex -= leftMost - 5;
   }
   const rightMost = state.lastIndexOf('#');
   if (state.length - rightMost < 5) {
@@ -32,8 +37,8 @@ function pad(state) {
 }
 
 function advance(state, patterns) {
-  const newState = ['.', '.'];
-  for (let i = 2; i < state.length - 2; i += 1) {
+  const newState = [];
+  for (let i = 0; i < state.length - 2; i += 1) {
     let isMatched = false;
     patterns.forEach((value, pattern) => {
       if (match(pattern, state, i)) {
@@ -60,9 +65,9 @@ function total(state) {
   return total;
 }
 
-async function run() {
+function init(input) {
+  const contents = input.slice();
   const patterns = new Map();
-  const contents = (await readFile(__dirname)).split('\n');
   let state = contents.shift().match(/initial state: ([.#]+)/)[1];
   state = state.split('');
   contents.shift();
@@ -74,10 +79,26 @@ async function run() {
   });
   state.zeroPotIndex = state.indexOf('#');
   pad(state);
+  return [state, patterns];
+}
+
+async function run() {
+  const contents = (await readFile(__dirname)).split('\n');
+  let [state, patterns] = init(contents);
   for (let i = 0; i < 20; i += 1) {
     state = advance(state, patterns);
   }
-  console.log(`${i}=${total(state)}`);
+  console.log(`part1: ${total(state)}`);
+  [state, patterns] = init(contents);
+  for (let i = 0; i < 1000; i += 1) {
+    state = advance(state, patterns);
+  }
+  const total1000 = total(state);
+  state = advance(state, patterns);
+  const total1001 = total(state);
+  const difference = total1001 - total1000;
+
+  console.log(`part2: ${total1000 + (50000000000 - 1000) * difference}`);
 }
 
 run();
