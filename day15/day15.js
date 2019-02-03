@@ -1,5 +1,5 @@
 #!/usr/local/bin/node
-
+//WRONG ANSWER TOO LOOW
 const readFile = require('../lib/file');
 
 function readingOrder(a, b) {
