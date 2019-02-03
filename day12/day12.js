@@ -50,6 +50,16 @@ function advance(state, patterns) {
   return newState;
 }
 
+function total(state) {
+  let total = 0;
+  for (let i = 0; i < state.length; i += 1) {
+    if (state[i] === '#') {
+      total += (i - state.zeroPotIndex);
+    }
+  }
+  return total;
+}
+
 async function run() {
   const patterns = new Map();
   const contents = (await readFile(__dirname)).split('\n');
@@ -67,14 +77,7 @@ async function run() {
   for (let i = 0; i < 20; i += 1) {
     state = advance(state, patterns);
   }
-
-  let total = 0;
-  for (let i = 0; i < state.length; i += 1) {
-    if (state[i] === '#') {
-      total += (i - state.zeroPotIndex);
-    }
-  }
-  console.log(total);
+  console.log(`${i}=${total(state)}`);
 }
 
 run();
