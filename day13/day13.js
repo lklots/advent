@@ -33,6 +33,15 @@ class Cart {
     this.y = y;
     this.dir = dir;
     this.turn = 'L';
+    this.crashed = false;
+  }
+
+  setCrashed() {
+    this.crashed = true;
+  }
+
+  isCrashed() {
+    return this.crashed;
   }
 
   move(track) {
@@ -117,29 +126,45 @@ function crashed(carts) {
   const locs = new Map();
   for (let i = 0; i < carts.length; i += 1) {
     const cart = carts[i];
-    const hash = `${cart.x},${cart.y}`;
-    if (locs.has(hash)) {
-      return [cart.x, cart.y];
+    if (!cart.isCrashed()) {
+      const hash = `${cart.x},${cart.y}`;
+      if (locs.has(hash)) {
+        cart.setCrashed();
+        locs.get(hash).setCrashed();
+        return [cart.x, cart.y];
+      }
+      locs.set(hash, cart);
     }
-    locs.set(hash, true);
   }
   return null;
 }
 
+function isLastCart(carts) {
+  return carts.filter(c => !c.isCrashed()).length === 1;
+}
+
+let FIRST_CRASH = true;
 function tick(map, carts) {
   carts.sort((a, b) => (a.y * 10000 + a.x) - (b.y * 10000 + b.x));
-  for (cart of carts) {
-    cart.move(map[cart.y][cart.x]);
-    const loc = crashed(carts);
-    if (loc) {
-      print(map, carts, loc);
-      console.log(`crash at ${loc}`);
-      return true;
+  for (let i = 0; i < carts.length; i += 1) {
+    const cart = carts[i];
+    if (!cart.isCrashed()) {
+      cart.move(map[cart.y][cart.x]);
+      const loc = crashed(carts);
+      if (loc && FIRST_CRASH) {
+        FIRST_CRASH = false;
+        console.log(`part1: ${loc}`);
+      }
+      if (isLastCart(carts)) {
+        const lastCart = carts.filter(c => !c.isCrashed())[0];
+        console.log(`part2: ${lastCart.x},${lastCart.y}`);
+        return true;
+      }
     }
   }
-
   return false;
 }
+
 
 async function run() {
   const carts = [];
