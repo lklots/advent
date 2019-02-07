@@ -26,6 +26,21 @@ function advance(state) {
   return combo;
 }
 
+function checkForSpecialRecipe(recipes, special) {
+  if (recipes.length < special.length + 1) {
+    return 0;
+  }
+  let last = recipes.slice(recipes.length - special.length, recipes.length);
+  if (last.join('') === special.join('')) {
+    return 1;
+  }
+  last = recipes.slice(recipes.length - special.length - 1, recipes.length - 1);
+  if (last.join('') === special.join('')) {
+    return 2;
+  }
+  return 0;
+}
+
 const state = {
   recipes: [3, 7],
   elf1: 0,
@@ -33,10 +48,16 @@ const state = {
 };
 
 let recipes = [];
-const TRAINING_LIMIT = 330121;
-
+const TRAINING_LIMIT = 3301210;
+const SPECIAL = '330121';
+let specialFound = false;
 while (state.recipes.length < TRAINING_LIMIT) {
   recipes = advance(state);
+  const index = checkForSpecialRecipe(state.recipes, SPECIAL.split(''));
+  if (index && !specialFound) {
+    specialFound = true;
+    console.log(`answer to part 2: ${state.recipes.length - SPECIAL.length - index + 1}`);
+  }
 }
 
 // if we created two extra recipes beyond the limit, just keep the last one!
@@ -49,4 +70,4 @@ if (state.recipes.length - TRAINING_LIMIT >= 1) {
 for (let i = 0; i < 10; i += 1) {
   recipes = recipes.concat(advance(state));
 }
-console.log(recipes.slice(0, 10).join(''));
+console.log(`part1 : ${recipes.slice(0, 10).join('')}`);
