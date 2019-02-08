@@ -20,6 +20,15 @@ function minIndexes(arr) {
   return minIdxs;
 }
 
+function distanceToCoords(x, y, coords) {
+  let total = 0;
+  for (let i = 0; i < coords.length; i += 1) {
+    const coord = coords[i];
+    total += mdist(x, y, coord[0], coord[1]);
+  }
+  return total;
+}
+
 function closestCoord(x, y, coords) {
   const distances = [];
   for (let i = 0; i < coords.length; i += 1) {
@@ -80,7 +89,7 @@ async function run() {
   const maxX = Math.max(...coords.map(x => x[0]));
   const minY = Math.min(...coords.map(y => y[1]));
   const maxY = Math.max(...coords.map(y => y[1]));
-  const map = [];
+  let map = [];
   for (let i = minY; i <= maxY; i += 1) {
     map[i] = [];
     for (let j = minX; j <= maxX; j += 1) {
@@ -89,7 +98,19 @@ async function run() {
   }
 
   const areas = coords.map(coord => area(coord, map, minX, maxX, minY, maxY));
-  console.log(Math.max(...areas.filter(x => x < Infinity)));
+  console.log(`part 1: ${Math.max(...areas.filter(x => x < Infinity))}`);
+
+  let total = 0;
+  for (let i = minY; i <= maxY; i += 1) {
+    map[i] = [];
+    for (let j = minX; j <= maxX; j += 1) {
+      const dist = distanceToCoords(j, i, coords);
+      if (dist < 10000) {
+        total += 1;
+      }
+    }
+  }
+  console.log(`part 2: ${total}`);
 }
 
 run();
