@@ -1,5 +1,6 @@
 #!/usr/local/bin/node
 
+const _ = require('lodash');
 const readFile = require('../lib/file');
 
 const BODY = 'BODY';
@@ -30,7 +31,7 @@ function parseArmy(type, lines) {
       return;
     }
     const match = line.match(/(\d+) units each with (\d+) hit points ?\(?(.*)\)? with an attack that does (\d+) ([a-z]+) damage at initiative (\d+)/);
-    const [_, units, hp, modifiers, attack, attackType, initiative] = match;
+    const [, units, hp, modifiers, attack, attackType, initiative] = match;
     army.push({
       id: ID,
       type,
@@ -46,7 +47,11 @@ function parseArmy(type, lines) {
   return army;
 }
 
+let BOOST = 0;
 function power(unit) {
+  if (unit.type === BODY) {
+    return unit.units * (unit.attack + BOOST);
+  }
   return unit.units * unit.attack;
 }
 
@@ -64,9 +69,7 @@ function target(unit, enemies) {
   if (!enemies.length) {
     return null;
   }
-  enemies.forEach((enemy) => {
-    // console.log(`${unit.type} group ${unit.id} would deal defending group ${enemy.id} ${damage(unit, enemy)} damage and power ${power(enemy)}`);
-  });
+
   enemies.sort((a, b) => {
     const d = damage(unit, b) - damage(unit, a);
     if (d === 0) {
@@ -87,20 +90,18 @@ function target(unit, enemies) {
   return enemy;
 }
 
-// 20 units, 10 hp. power 50. (20*10-45)/10 = 15.5
-
 function attack(unit, enemy) {
   if (!enemy) {
     return null;
   }
   const remainingHp = (enemy.hp * enemy.units) - damage(unit, enemy);
   if (remainingHp <= 0) {
-    // console.log(`${unit.type} group ${unit.id} attacks defending group ${enemy.id}, killing ${enemy.units} units`);
+    console.log(`${unit.type} group ${unit.id} attacks defending group ${enemy.id}, DESTROYING the unit`);
     enemy.units = 0;
     return enemy;
   }
   const unitsRemaining = Math.ceil(remainingHp / enemy.hp);
-  // console.log(`${unit.type} group ${unit.id} attacks defending group ${enemy.id}, killing ${enemy.units - unitsRemaining} units`);
+  console.log(`${unit.type} group ${unit.id} attacks defending group ${enemy.id}, killing ${enemy.units - unitsRemaining} units, remaining ${unitsRemaining}`);
   enemy.units = unitsRemaining;
   return enemy;
 }
@@ -145,16 +146,31 @@ function fight(body, virus) {
   });
 }
 
+function war(virus, body) {
+  const vclone = _.cloneDeep(virus);
+  const bclone = _.cloneDeep(body);
+  while (vclone.length && bclone.length) {
+    fight(bclone, vclone);
+  }
+  const army = bclone.length ? bclone : vclone;
+  const type = bclone.length ? BODY : VIRUS;
+  return [type, army.reduce((acc, unit) => acc + unit.units, 0)];
+}
+
 async function run() {
   const lines = (await readFile(__dirname, 'input.txt')).split('\n');
   const index = lines.findIndex(x => x.match(/Infection:/));
   const body = parseArmy(BODY, lines.slice(1, index));
   const virus = parseArmy(VIRUS, lines.slice(index + 1, lines.length));
-  while (body.length && virus.length) {
-    fight(body, virus);
+  let [winner, unitsRemaining] = war(virus, body, 0);
+  console.log(`part 1: ${unitsRemaining}`);
+  BOOST = 34;
+  while (winner !== BODY) {
+    console.log(winner);
+    [winner, unitsRemaining] = war(virus, body);
+    BOOST += 1;
   }
-  const army = body.length ? body : virus;
-  console.log(army.reduce((acc, unit) => acc + unit.units, 0));
+  console.log(`part 2: ${winner}: ${unitsRemaining}`);
 }
 
 run();
