@@ -1,10 +1,10 @@
 #!/usr/local/bin/node
-
+const _ = require('lodash');
 const readFile = require('../lib/file');
 
 function parse(before, op, after) {
   const beforem = before.match(/(\d), (\d), (\d), (\d)/);
-  const opm = op.match(/(\d) (\d) (\d) (\d)/);
+  const opm = op.match(/(\d+) (\d) (\d) (\d)/);
   const afterm = after.match(/(\d), (\d), (\d), (\d)/);
 
   return [
@@ -15,6 +15,10 @@ function parse(before, op, after) {
 }
 
 let REGISTERS = [0, 0, 0, 0];
+
+function reset() {
+  REGISTERS = [0, 0, 0, 0];
+}
 
 function register(reg) {
   return REGISTERS[reg];
@@ -29,8 +33,8 @@ const OPCODES = {
   bani: (a, b) => register(a) & b,
   borr: (a, b) => register(a) | register(b),
   bori: (a, b) => register(a) | b,
-  setr: (a, b) => register(a),
-  seti: (a, b) => a,
+  setr: a => register(a),
+  seti: a => a,
   gtir: (a, b) => (a > register(b) ? 1 : 0),
   gtri: (a, b) => (register(a) > b ? 1 : 0),
   gtrr: (a, b) => (register(a) > register(b) ? 1 : 0),
@@ -50,17 +54,50 @@ function cmp(got, expected) {
 }
 
 function test(before, op, after) {
-  const _ = op.shift();
-  const a = op.shift();
-  const b = op.shift();
-  const c = op.shift();
+  const [, a, b, c] = op;
 
   const behaving = Object.keys(OPCODES).map((opcode) => {
     REGISTERS = before.slice();
     REGISTERS[c] = OPCODES[opcode](a, b);
     return cmp(REGISTERS, after);
   });
-  return behaving.filter(x => x).length;
+  return behaving;
+}
+
+function mapOpCodes(tests, results) {
+  const groupByCode = [];
+  for (let i = 0; i < tests.length; i += 1) {
+    const opCode = tests[i][1][0];
+    if (!groupByCode[opCode]) {
+      groupByCode[opCode] = [results[i]];
+    } else {
+      groupByCode[opCode].push(results[i]);
+    }
+  }
+  let possible = groupByCode.map(group => _.zip(...group).map(list => list.every(x => x)));
+  possible = possible.map(list => _.zipObject(Object.keys(OPCODES), list));
+
+  const mapping = {};
+  while (possible.filter(x => !_.isEmpty(x)).length) {
+    const decisions = possible.map(obj => _.pickBy(obj));
+    for (let i = 0; i < decisions.length; i += 1) {
+      const decision = decisions[i];
+      if (_.keys(decision).length === 1) {
+        mapping[i] = _.keys(decision)[0];
+        possible = possible.map(obj => _.omit(obj, _.keys(decision)[0]));
+      }
+    }
+  }
+
+  return mapping;
+}
+
+function doCommands(commands, mapping) {
+  reset();
+  while (commands.length) {
+    const [op, a, b, c] = commands.shift();
+    REGISTERS[c] = OPCODES[mapping[op]](a, b);
+  }
 }
 
 async function run() {
@@ -74,7 +111,20 @@ async function run() {
     }
   }
   const results = tests.map(t => test(...t));
-  console.log(`number of tests that match at least 3 op codes ${results.filter(x => x >= 3).length}`);
+  console.log(`part 1: ${results.map(list => list.filter(x => x)).filter(list => list.length >= 3).length}`);
+
+
+  const mapping = mapOpCodes(tests, results);
+  const commands = [];
+  while (contents.length) {
+    const line = contents.shift();
+    if (line.trim().length) {
+      commands.push(line.split(' ').map(x => parseInt(x, 10)));
+    }
+  }
+
+  doCommands(commands, mapping);
+  console.log(`part2: ${REGISTERS[0]}`);
 }
 
 run();
