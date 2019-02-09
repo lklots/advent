@@ -76,16 +76,12 @@ function tick(map) {
   return newMap;
 }
 
-async function run() {
-  let map = (await readFile(__dirname, 'input.txt')).split('\n').map(x => x.split('')).filter(x => x.length);
-  for (let i = 0; i < 10; i += 1) {
-    map = tick(map);
-  }
-
+function total(map) {
   const counts = {
     lumber: 0,
     trees: 0,
-  }
+  };
+
   for (let i = 0; i < map.length; i += 1) {
     for (let j = 0; j < map[0].length; j += 1) {
       if (map[i][j] === '|') {
@@ -95,7 +91,19 @@ async function run() {
       }
     }
   }
-  console.log(`lumber * tress = ${counts.trees * counts.lumber}`);
+  return counts;
+}
+
+async function run() {
+  let map = (await readFile(__dirname, 'input.txt')).split('\n').map(x => x.split('')).filter(x => x.length);
+  for (let i = 0; i < 2000; i += 1) {
+    map = tick(map);
+    console.log(total(map));
+  }
+  console.log(map.map(x => x.join('')).join('\n'));
+
+  const counts = total(map);
+  console.log(`lumber * trees = ${counts.trees * counts.lumber}`);
 }
 
 run();
