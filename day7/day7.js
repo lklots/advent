@@ -1,52 +1,74 @@
 #!/usr/bin/env node
-// WRONG ANSWER
+const _ = require('lodash');
 const readInput = require('../lib/file');
 
-function topoSort(nodes, depsFromTo, depsToFrom) {
-  let sorted = [];
-  let frontier = new Array(...nodes).filter(n => !depsFromTo.has(n));
-  const visited = new Map();
-  while (frontier.length > 0) {
-    frontier.sort();
-    sorted = sorted.concat(frontier);
-    let newFrontier = [];
-    frontier.forEach((node) => {
-      visited.set(node, true);
-    });
-    frontier.forEach((node) => {
-      let toVisit = depsToFrom.get(node) || [];
-      toVisit = toVisit.filter(n => !visited.has(n));
-      newFrontier = newFrontier.concat(toVisit);
-    });
-    frontier = new Array(...new Set(newFrontier));
+class Graph {
+  constructor() {
+    this.nodes = new Set();
+    this.deps = {};
+    this.reverseDeps = {};
   }
 
+  addNode(node) {
+    this.nodes.add(node);
+    if (!this.deps[node]) {
+      this.deps[node] = [];
+    }
+    if (!this.reverseDeps[node]) {
+      this.reverseDeps[node] = [];
+    }
+    return this;
+  }
+
+  addDep(from, to) {
+    this.deps[from].push(to);
+    this.reverseDeps[to].push(from);
+    return this;
+  }
+
+  getDeps(node) {
+    return this.deps[node];
+  }
+
+  inDegree(node) {
+    return this.reverseDeps[node].length;
+  }
+
+  getNodes() {
+    return new Array(...this.nodes);
+  }
+}
+
+function topoSort(graph) {
+  let sorted = [];
+  const degree = graph.getNodes().reduce((o, n) => Object.assign(o, { [n]: graph.inDegree(n) }), {});
+  const queue = _.keys(_.pickBy(degree, (v, k) => v === 0));
+  while (queue.length) {
+    queue.sort().reverse();
+    const node = queue.pop();
+    sorted.push(node);
+    graph.getDeps(node).forEach((dep) => {
+      degree[dep] -= 1;
+      if (degree[dep] === 0) {
+        queue.push(dep);
+      }
+    });
+  }
   return sorted;
 }
 
-function addDep(deps, from, to) {
-  if (deps.has(from)) {
-    deps.set(from, deps.get(from).concat([to]));
-  } else {
-    deps.set(from, [to]);
-  }
-}
-
 async function run() {
-  const depsFromTo = new Map();
-  const depsToFrom = new Map();
-  const nodes = new Set();
-  (await readInput(__dirname)).split('\n').forEach((line) => {
+  const graph = new Graph();
+  (await readInput(__dirname, 'input.txt')).split('\n').forEach((line) => {
     const matches = line.match(/Step ([A-Z]) must be finished before step ([A-Z])/);
     if (matches) {
-      const [_, to, from] = matches;
-      nodes.add(from).add(to);
-      addDep(depsFromTo, from, to);
-      addDep(depsToFrom, to, from);
+      const [, from, to] = matches;
+      graph.addNode(to).addNode(from);
+      graph.addDep(from, to);
     }
   });
 
-  console.log(topoSort(nodes, depsFromTo, depsToFrom).join(','));
+  console.log(topoSort(graph).join(''));
 }
 
 run();
