@@ -2,9 +2,9 @@
 // WRONG ANSWER
 const readFile = require('../lib/file');
 
-function count(map) {
+function count(map, minY) {
   let total = 0;
-  for (let i = 1; i < map.length; i += 1) {
+  for (let i = minY; i < map.length; i += 1) {
     for (let j = 0; j < map[i].length; j += 1) {
       if (map[i][j] === '|' || map[i][j] === '~' || map[i][j] === '+') {
         total += 1;
@@ -16,11 +16,11 @@ function count(map) {
 
 function print(map, minX) {
   let out = '';
-  for (let i = 0; i < map.length; i += 1) {
+  for (let i = minX; i < map.length; i += 1) {
     if (!map[i]) {
       out += 'xxxxxxxxxxxxxxxx';
     } else {
-      for (let j = minX; j < map[i].length; j += 1) {
+      for (let j = 0; j < map[i].length; j += 1) {
         if (!map[i][j]) {
           out += '.';
         } else {
@@ -131,18 +131,19 @@ function stream(map, sources, maxY) {
 }
 
 async function run() {
-  const lines = (await readFile(__dirname, 'input.txt')).split('\n');
+  const lines = (await readFile(__dirname, 'input3.txt')).split('\n');
 
   const map = [];
-  const mins = [];
-  const maxs = [];
+  const xs = [];
+  const ys = [];
   lines.forEach((line) => {
     const matchY = line.match(/x=(\d+), y=(\d+)\.\.(\d+)/);
     const matchX = line.match(/y=(\d+), x=(\d+)\.\.(\d+)/);
     if (matchY) {
       const [_, x, minY, maxY] = matchY.map(n => parseInt(n, 10));
-      mins.push(x);
-      maxs.push(maxY);
+      xs.push(x);
+      ys.push(maxY);
+      ys.push(minY);
       for (let i = minY; i <= maxY; i += 1) {
         if (!map[i]) {
           map[i] = [];
@@ -151,8 +152,9 @@ async function run() {
       }
     } else if (matchX) {
       const [_, y, minX, maxX] = matchX.map(n => parseInt(n, 10));
-      mins.push(minX);
-      maxs.push(y);
+      xs.push(minX);
+      xs.push(maxX);
+      ys.push(y);
       if (!map[y]) {
         map[y] = [];
       }
@@ -161,8 +163,9 @@ async function run() {
       }
     }
   });
-  const minX = Math.min(...mins);
-  const maxY = Math.max(...maxs);
+  const minX = Math.min(...xs);
+  const maxY = Math.max(...ys);
+  const minY = Math.min(...ys);
   if (!map[0]) {
     map[0] = [];
   }
@@ -176,7 +179,7 @@ async function run() {
   }
   print(map, minX);
   console.log('\n\n\n\n\n\n\n');
-  console.log(count(map));
+  console.log(count(map, minY));
 }
 
 run();
