@@ -31,7 +31,79 @@ async function run() {
     }
   }
 
-  console.log(total);
+  console.log(`part 1: ${total}`);
 }
 
+class Node {
+  constructor(expectedChildren, expectedMeta) {
+    this.parent = null;
+    this.children = [];
+    this.meta = [];
+    this.expectedChildren = expectedChildren;
+    this.expectedMeta = expectedMeta;
+  }
+
+  addChild(child) {
+    this.children.push(child);
+    child.parent = this;
+    return this;
+  }
+
+  getChildren() {
+    return this.children;
+  }
+
+  addMeta(meta) {
+    this.meta.push(meta);
+    return this;
+  }
+
+  getMeta() {
+    return this.meta;
+  }
+
+  getRemainingChildren() {
+    return this.expectedChildren - this.children.length;
+  }
+
+  getExpectedMeta() {
+    return this.expectedMeta;
+  }
+
+  getTotal() {
+    if (this.children.length === 0) {
+      return this.meta.reduce((t, v) => t + v, 0);
+    }
+    let total = 0;
+    for (let i = 0; i < this.meta.length; i += 1) {
+      const index = this.meta[i];
+      if (index > 0 && index <= this.children.length) {
+        total += this.children[index - 1].getTotal();
+      }
+    }
+    return total;
+  }
+}
+
+async function run2() {
+  let input = (await getInput(__dirname, 'input.txt')).split(' ');
+  input = toInt(input);
+  const root = new Node(input.shift(), input.shift());
+  const stack = [root];
+  while (stack.length > 0) {
+    if (last(stack).getRemainingChildren() === 0) {
+      const leaf = stack.pop();
+      for (let i = 0; i < leaf.getExpectedMeta(); i += 1) {
+        leaf.addMeta(input.shift());
+      }
+    } else {
+      const child = new Node(input.shift(), input.shift());
+      last(stack).addChild(child);
+      stack.push(child);
+    }
+  }
+
+  console.log(`part 2: ${root.getTotal()}`);
+}
 run();
+run2();
