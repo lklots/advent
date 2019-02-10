@@ -4,8 +4,8 @@ const readFile = require('../lib/file');
 
 function count(map) {
   let total = 0;
-  for (let i = 0; i < map.length; i += 1) {
-    for (let j = 0; j < map[j].length; j += 1) {
+  for (let i = 1; i < map.length; i += 1) {
+    for (let j = 0; j < map[i].length; j += 1) {
       if (map[i][j] === '|' || map[i][j] === '~' || map[i][j] === '+') {
         total += 1;
       }
@@ -18,7 +18,7 @@ function print(map, minX) {
   let out = '';
   for (let i = 0; i < map.length; i += 1) {
     if (!map[i]) {
-      out += '..................';
+      out += 'xxxxxxxxxxxxxxxx';
     } else {
       for (let j = minX; j < map[i].length; j += 1) {
         if (!map[i][j]) {
@@ -131,7 +131,7 @@ function stream(map, sources, maxY) {
 }
 
 async function run() {
-  const lines = (await readFile(__dirname, 'input3.txt')).split('\n');
+  const lines = (await readFile(__dirname, 'input.txt')).split('\n');
 
   const map = [];
   const mins = [];
