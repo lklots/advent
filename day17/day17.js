@@ -14,6 +14,18 @@ function count(map, minY) {
   return total;
 }
 
+function countAtRest(map, minY) {
+  let total = 0;
+  for (let i = minY; i < map.length; i += 1) {
+    for (let j = 0; j < map[i].length; j += 1) {
+      if (map[i][j] === '~' || map[i][j] === '+') {
+        total += 1;
+      }
+    }
+  }
+  return total;
+}
+
 function print(map, minX) {
   let out = '';
   for (let i = minX; i < map.length; i += 1) {
@@ -131,7 +143,7 @@ function stream(map, sources, maxY) {
 }
 
 async function run() {
-  const lines = (await readFile(__dirname, 'input3.txt')).split('\n');
+  const lines = (await readFile(__dirname, 'input.txt')).split('\n');
 
   const map = [];
   const xs = [];
@@ -179,7 +191,8 @@ async function run() {
   }
   print(map, minX);
   console.log('\n\n\n\n\n\n\n');
-  console.log(count(map, minY));
+  console.log(`part 1: ${count(map, minY)}`);
+  console.log(`part 2: ${countAtRest(map, minY)}`);
 }
 
 run();
