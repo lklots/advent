@@ -2,7 +2,7 @@
 
 const readFile = require('../lib/file');
 
-let REGISTERS = [0, 0, 0, 0, 0, 0];
+let REGISTERS = [1, 0, 0, 0, 0, 0];
 
 function register(reg) {
   return REGISTERS[reg];
@@ -32,6 +32,7 @@ async function run() {
 
   const ipregister = parseInt(lines.shift().match(/#ip (\d)/)[1], 10);
   const instructions = lines.map(x => x.split(' '));
+  let sample = 0;
   while (REGISTERS[ipregister] < instructions.length) {
     let [opcode, a, b, c] = instructions[REGISTERS[ipregister]];
     a = parseInt(a, 10);
@@ -39,7 +40,13 @@ async function run() {
     c = parseInt(c, 10);
     const before = REGISTERS.slice();
     REGISTERS[c] = OPCODES[opcode](a, b);
-    // console.log(`ip=${before[ipregister]} [${before.join(',')}] ${opcode} ${a} ${b} ${c} [${REGISTERS.join(',')}]`);
+    if (sample % 1 === 100) {
+      console.log(`ip=${before[ipregister]} [${before.join(',')}] ${opcode} ${a} ${b} ${c} [${REGISTERS.join(',')}]`);
+    }
+    sample += 1;
+    if (sample >= 10000000000) {
+      return;
+    }
     REGISTERS[ipregister] += 1;
   }
 
