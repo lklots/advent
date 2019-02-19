@@ -131,22 +131,22 @@ function cost(path) {
 function run() {
   const [tx, ty] = TARGET;
   const map = [];
-  for (let i = 0; i <= ty + 20; i += 1) {
+  for (let i = 0; i <= ty + 200; i += 1) {
     map[i] = [];
-    for (let j = 0; j <= tx + 20; j += 1) {
+    for (let j = 0; j <= tx + 200; j += 1) {
       map[i][j] = null;
     }
   }
   map[0][0] = gindex(map, 0, 0);
   map[ty][tx] = gindex(map, tx, ty);
 
-  for (let i = 0; i <= Math.min(tx, ty) + 20; i += 1) {
+  for (let i = 0; i <= Math.min(tx, ty) + 200; i += 1) {
     round(map, i, i);
   }
 
   let total = 0;
-  for (let i = 0; i < map.length; i += 1) {
-    for (let j = 0; j < map[0].length; j += 1) {
+  for (let i = 0; i < ty; i += 1) {
+    for (let j = 0; j < tx; j += 1) {
       total += erosion(map, j, i) % 3;
     }
   }
