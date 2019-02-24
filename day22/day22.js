@@ -2,10 +2,70 @@
 
 const _ = require('lodash');
 
-const astar = require('../lib/astar');
+function set(map, key, value) {
+  map.set(JSON.stringify(key), value);
+}
+
+function get(map, key) {
+  return map.get(JSON.stringify(key));
+}
+
+function has(map, key) {
+  return map.has(JSON.stringify(key));
+}
+
+function path(previous, step) {
+  if (!step) {
+    return [];
+  }
+  return path(previous, get(previous, step)).concat([step]);
+}
+
+function astar(start, hFunc, movesFunc) {
+  const frontier = [[hFunc(start), start]];
+  const previous = new Map();
+  set(previous, start, null);
+  const pathCost = new Map();
+  set(pathCost, start, 0);
+
+  while (frontier.length) {
+    frontier.sort((a, b) => a[0] - b[0]);
+    const [, step] = frontier.shift();
+    if (hFunc(step) === 0) {
+      return path(previous, step);
+    }
+    movesFunc(step).forEach((move) => {
+      let newCost;
+      if (move.equip) { // HACK! figure out why this works!
+        newCost = get(pathCost, step) + 7;
+      } else {
+        newCost = get(pathCost, step) + 1;
+      }
+      if (!has(pathCost, move) || newCost < get(pathCost, move)) {
+        frontier.unshift([newCost + hFunc(move), move]);
+        set(pathCost, move, newCost);
+        set(previous, move, step);
+      }
+    });
+  }
+  return { failed: true };
+}
 
 const DEPTH = 6969;
 const TARGET = [9, 796];
+
+const PADDING = 200;
+const GEAR = 'gear';
+const TORCH = 'torch';
+const NEITHER = 'neither';
+const ROCKY = '.';
+const NARROW = '|';
+const WET = '=';
+const TOOL_MAPPING = {
+  [ROCKY]: [GEAR, TORCH],
+  [WET]: [GEAR, NEITHER],
+  [NARROW]: [TORCH, NEITHER],
+};
 
 function erosion(map, x, y) {
   const index = map[y][x];
@@ -18,19 +78,26 @@ function erosion(map, x, y) {
 function type(map, x, y) {
   const t = erosion(map, x, y) % 3;
   switch (t) {
-    case 0: return '.';
-    case 1: return '=';
-    case 2: return '|';
+    case 0: return ROCKY;
+    case 1: return WET;
+    case 2: return NARROW;
     default: throw Error(`impossible: ${t}`);
   }
 }
 
-function print(map) {
+function print(map, path) {
   let out = '';
   for (let i = 0; i < map.length; i += 1) {
     for (let j = 0; j < map[0].length; j += 1) {
+      const matches = path.filter(p => p.coord[0] === j && p.coord[1] === i);
       if (i === TARGET[1] && j === TARGET[0]) {
         out += 'T';
+      } else if (matches.length) {
+        if (matches.length >= 2) {
+          out += '0';
+        } else {
+          out += 'o';
+        }
       } else if (map[i][j] !== null) {
         out += type(map, j, i);
       } else {
@@ -64,22 +131,12 @@ function round(map, x, y) {
   }
 }
 
-const GEAR = 'gear';
-const TORCH = 'torch';
-const NEITHER = 'neither';
-const TOOL_MAPPING = {
-  '.': [GEAR, TORCH],
-  '=': [GEAR, NEITHER],
-  '|': [TORCH, NEITHER],
-};
-const TOOLS = [GEAR, TORCH, NEITHER];
-
 function neighbors4(x, y) {
   return [
-    [x + 1, y],
-    [x - 1, y],
     [x, y + 1],
     [x, y - 1],
+    [x + 1, y],
+    [x - 1, y],
   ];
 }
 
@@ -113,13 +170,14 @@ function moves(map, goal, state) {
     if (equiped === okTools[0] || equiped === okTools[1]) {
       return [{
         coord: [x, y],
+        equip: false,
         equiped,
       }];
     }
     return [];
   }).concat([{
     coord: [sx, sy],
-    equip: otherTool[0],
+    equip: true,
     equiped: otherTool[0],
   }]));
 }
@@ -131,16 +189,16 @@ function cost(path) {
 function run() {
   const [tx, ty] = TARGET;
   const map = [];
-  for (let i = 0; i <= ty + 200; i += 1) {
+  for (let i = 0; i <= ty + PADDING; i += 1) {
     map[i] = [];
-    for (let j = 0; j <= tx + 200; j += 1) {
+    for (let j = 0; j <= tx + PADDING; j += 1) {
       map[i][j] = null;
     }
   }
   map[0][0] = gindex(map, 0, 0);
   map[ty][tx] = gindex(map, tx, ty);
 
-  for (let i = 0; i <= Math.min(tx, ty) + 200; i += 1) {
+  for (let i = 0; i <= Math.min(tx, ty) + PADDING; i += 1) {
     round(map, i, i);
   }
 
@@ -153,6 +211,7 @@ function run() {
   console.log(`part1: ${total}`);
   const path = astar({
     coord: [0, 0],
+    equip: false,
     equiped: TORCH,
   }, state => hFunc(TARGET, state), state => moves(map, TARGET, state));
   console.log(`part2: ${cost(path) - 1}`);
