@@ -28,7 +28,7 @@ function simulate(players, maxMarble) {
     const player = ((marble - 1) % players) + 1;
     if (marble % 23 === 0) {
       scores[player] += marble;
-      // bad but % in js is dumb
+      // bad but % in js is 
       if (current - 7 < 0) {
         current = (current - 7) + circle.length;
       } else {
@@ -41,9 +41,7 @@ function simulate(players, maxMarble) {
       circle = insertAt(circle, current, marble);
     }
   }
-
-  console.log(`${maxMarble}: ${Math.max(...Object.values(scores))}`);
-
+  return Math.max(...Object.values(scores));
 }
 
 console.log(`part 1: ${simulate(479, 71035)}`);
