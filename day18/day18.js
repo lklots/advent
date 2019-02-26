@@ -94,16 +94,23 @@ function total(map) {
   return counts;
 }
 
+// repeats every 28 generations
 async function run() {
+  let sample = 0;
   let map = (await readFile(__dirname, 'input.txt')).split('\n').map(x => x.split('')).filter(x => x.length);
+  let generations = {};
   for (let i = 0; i < 2000; i += 1) {
+    sample += 1;
     map = tick(map);
-    console.log(total(map));
+    const counts = total(map);
+    generations[i] = counts.trees * counts.lumber;
+    console.log(`${i+1},${counts.trees * counts.lumber}`);
   }
-  console.log(map.map(x => x.join('')).join('\n'));
+  console.log(`part 1: lumber * trees = ${generations[9]}`);
 
-  const counts = total(map);
-  console.log(`lumber * trees = ${counts.trees * counts.lumber}`);
+  const STEP = 1000000000;
+  const generation = (STEP - 1 - 1000) % 28;
+  console.log(`part2: generation ${STEP}: ${generations[1000 + generation]}`);
 }
 
 run();
