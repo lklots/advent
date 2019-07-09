@@ -1,31 +1,31 @@
-seti 123 0 4        # BEGIN:
-bani 4 456 4        # 
-eqri 4 72 4         # 
-addr 4 5 5          # if (123 & 456) === 72 ? goto OK : goto ERR; $5 = 3; 
-seti 0 0 5          # ERROR: goto BEGIN;
-seti 0 8 4          # OK: $4 = 0; $5 = 5;
-bori 4 65536 3      # $3 = $4 | 65536;
-seti 14464005 5 4   # LABEL3: $4 = 14464005;
-bani 3 255 2        # $2 = $3 & 255; $3 = 0;
-addr 4 2 4          # $4 = $2 + $4; $4 = $3 & 255; $4 = ($4 | 65536) & 255;
-bani 4 16777215 4   # $4 = (($4 | 65536) & 255) & 16777215;
-muli 4 65899 4      # $4 = ((($4 | 65536) & 255) & 16777215) * 65899;
-bani 4 16777215 4   # $4 = (((($4 | 65536) & 255) & 16777215) * 65899) & 16777215;
-gtir 256 3 2        # if $3 <= 256 ? goto LABEL3; goto LABEL1;
-addr 2 5 5          # ^
-addi 5 1 5          # ^ 
-seti 27 7 5         # ^ 
-seti 0 3 2          # LABEL1: $2 = 0
-addi 2 1 1          # $1 = $2 + $1
+coseti 123 0 4      # $4 = 123;
+bani 4 456 4        # $4 = 4 & 456
+eqri 4 72 4         # if ($4 === 72) ? $4 = 1 : $4 = 0;
+addr 4 5 5          # if ($4 === 1) ? goto BEGIN : goto ERROR;
+seti 0 0 5          # ^
+seti 0 8 4          # BEGIN: $4 = 0;
+bori 4 65536 3      # OR: $3 = $4 | 65536;
+seti 14464005 5 4   # $4 = 14464005;
+bani 3 255 2        # LOOP: $2 = $3 & 255;
+addr 4 2 4          # $4 = $2 + $4;
+bani 4 16777215 4   # $4 = $4 & 16777215;
+muli 4 65899 4      # $4 = $4 * 65899;
+bani 4 16777215 4   # $4 = $4 & 16777215;
+gtir 256 3 2        # if (256 > $3) ? $2 = 1; $2 = 0;
+addr 2 5 5          # if ($2 === 1) ? goto HERE : goto NEXT
+addi 5 1 5          # NEXT: goto START
+seti 27 7 5         # HERE: goto HOME
+seti 0 3 2          # START: $2 = 0
+addi 2 1 1          # LABEL1: $1 = $2 + $1
 muli 1 256 1        # $1 *= 256
-gtrr 1 3 1          # if ($1 > $3) ? goto LABEL5; goto LABEL4;
-addr 1 5 5          # ip += $1 
-addi 5 1 5          # ip += 1; 
-seti 25 2 5         # ip = 25; 
+gtrr 1 3 1          # if ($1 > $3) ? $1 = 1 : $1 = 0;
+addr 1 5 5          # if ($1 === 1) ? goto TRUE : goto NEXT2
+addi 5 1 5          # NEXT2: goto LABEL4
+seti 25 2 5         # TRUE: goto LABEL5
 addi 2 1 2          # LABEL4: $2 += 1; 
-seti 17 9 5         # ip = 17; LABEL5: goto LABEL1;
-setr 2 2 3          # $3 = $2 
-seti 7 3 5          # LABEL2: ip = 7;
-eqrr 4 0 2          # if ($4 === $0) ? $2 = 1 : $2 = 0;
-addr 2 5 5          # ip += $2
-seti 5 9 5          # ip = 5;
+seti 17 9 5         # goto LABEL1;
+setr 2 2 3          # LABEL5: $3 = $2 
+seti 7 3 5          # goto LOOP;
+eqrr 4 0 2          # HOME: if ($4 === $0) ? $2 = 1 : $2 = 0;
+addr 2 5 5          *# if ($2 === 1) ? TERMINATE : goto OR
+seti 5 9 5          # ^

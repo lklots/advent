@@ -30,27 +30,20 @@ const OPCODES = {
 async function run() {
   const lines = (await readFile(__dirname, 'input.txt')).split('\n');
 
-  let total = 0;
   const ipregister = parseInt(lines.shift().match(/#ip (\d)/)[1], 10);
-  const instructions = lines.map(x => x.split(' ')).filter(x => x[0].length);
-  console.log(instructions);
-  for (let i = 0; i < instructions.length; i += 1) {
-    REGISTERS = [0, 0, 0, 0, 0];
-    REGISTERS[ipregister] = i;
-    while (REGISTERS[ipregister] < instructions.length && total < 1000000) {
-      let [opcode, a, b, c] = instructions[REGISTERS[ipregister]];
-      a = parseInt(a, 10);
-      b = parseInt(b, 10);
-      c = parseInt(c, 10);
-      const before = REGISTERS.slice();
-      REGISTERS[c] = OPCODES[opcode](a, b);
-      //console.log(`ip=${before[ipregister]} [${before.join(',')}] ${opcode} ${a} ${b} ${c} [${REGISTERS.join(',')}]`);
-      REGISTERS[ipregister] += 1;
-      total += 1;
-    } 
-    console.log(`ip(${i}): ${total}`);
-    total = 0;
+  const instructions = lines.map(x => x.split(' '));
+  while (REGISTERS[ipregister] < instructions.length) {
+    let [opcode, a, b, c] = instructions[REGISTERS[ipregister]];
+    a = parseInt(a, 10);
+    b = parseInt(b, 10);
+    c = parseInt(c, 10);
+    const before = REGISTERS.slice();
+    REGISTERS[c] = OPCODES[opcode](a, b);
+    console.log(`ip=${before[ipregister]} [${before.join(',')}] ${opcode} ${a} ${b} ${c} [${REGISTERS.join(',')}]`);
+    REGISTERS[ipregister] += 1;
   }
+
+  console.log(REGISTERS[0]);
 }
 
 run();

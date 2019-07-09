@@ -2,6 +2,28 @@
 
 const readFile = require('../lib/file');
 
+function distance(a, b) {
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
+}
+
+function intersect(bot1, bot2) {
+  return distance(bot1, bot2) < bot1.rad + bot2.rad;
+}
+
+function intersections(bots) {
+  const inters = {};
+  for (let i = 0; i < bots.length; i += 1) {
+    const bot = bots[i];
+    inters[bot] = [];
+    for (let j = 0; j < bots.length; j += 1) {
+      if (intersect(bot, bot[j])) {
+        inters.push(bot[j]);
+      }
+    }
+  }
+  return inters;
+}
+
 function maxRadId(bots) {
   let value = null;
   let index = null;
@@ -13,10 +35,6 @@ function maxRadId(bots) {
     }
   }
   return index;
-}
-
-function distance(a, b) {
-  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]);
 }
 
 async function run() {
