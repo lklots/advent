@@ -18,29 +18,34 @@ function step(dir, x, y) {
 class Panel {
   constructor() {
     this.map = new Map();
-    this.x = 0;
-    this.y = 0;
   }
 
   place(wire, check) {
     this.x = 0;
     this.y = 0;
-    const checks = [];
+    this.count = 0;
+    const mdists = [];
+    const wdists = [];
     wire.forEach((inst) => {
       const dir = inst[0];
       const steps = parseInt(inst.slice(1), 10);
       _.range(0, steps).forEach(() => {
         ({ x: this.x, y: this.y } = step(dir, this.x, this.y));
+        this.count += 1;
         if (check) {
           if (this.map.get(`${this.x},${this.y}`)) {
-            checks.push(mdist(this.x, this.y));
+            wdists.push(this.count + this.map.get(`${this.x},${this.y}`));
+            mdists.push(mdist(this.x, this.y));
           }
         } else {
-          this.map.set(`${this.x},${this.y}`, true);
+          this.map.set(`${this.x},${this.y}`, this.count);
         }
       });
     });
-    return checks;
+    return {
+      mdists,
+      wdists,
+    };
   }
 }
 
@@ -49,7 +54,9 @@ async function run() {
 
   const panel = new Panel();
   panel.place(wire1, false);
-  console.log(Math.min(...panel.place(wire2, true)));
+  const { mdists, wdists } = panel.place(wire2, true);
+  console.log(Math.min(...mdists));
+  console.log(Math.min(...wdists));
 }
 
 run();
