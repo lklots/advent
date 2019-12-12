@@ -72,7 +72,8 @@ function exec(registers_, input) {
 async function run() {
   const input = await readInput('2019/05/');
   const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
-  exec(_.clone(registers), parseInt(process.argv[2], 10));
+  exec(_.clone(registers), 1);
+  exec(_.clone(registers), 5);
 }
 
 run();
