@@ -10,62 +10,69 @@ function decode(op) {
   return [code % 100, [digit(code, 2), digit(code, 3), digit(code, 4), digit(code, 5)]];
 }
 
-function exec(registers_, inputs) {
-  const registers = registers_; // make linter happy
-  let ip = 0;
-  const OPS = {
-    1: (x, y) => x + y,
-    2: (x, y) => x * y,
-    3: (x) => { registers[x] = inputs.shift(); },
-    4: x => x,
-    5: (x, y) => {
-      ip = x !== 0 ? y : ip + 3;
-    },
-    6: (x, y) => {
-      ip = x === 0 ? y : ip + 3;
-    },
-    7: (x, y) => +(x < y),
-    8: (x, y) => +(x === y),
-  };
 
-  const resolve = (mode, index) => (mode ? registers[index] : registers[registers[index]]);
-  let opcode;
-  let modes;
-  while (opcode !== 99) {
-    [opcode, modes] = decode(registers[ip]);
-    const op = OPS[opcode];
-    if (opcode === 99) { break; }
-    switch (opcode) {
-      case 1:
-      case 2:
-      case 7:
-      case 8:
-        // console.log(`${ip}: [${modes.join(',')}] ${registers[ip + 3]} = ${opcode}(${resolve(modes[0], ip + 1)}, ${resolve(modes[1], ip + 2)}):\t\t ${registers}`);
-        registers[registers[ip + 3]] = op(resolve(modes[0], ip + 1), resolve(modes[1], ip + 2));
-        ip += 4;
-        break;
-      case 3:
-        // console.log(`${ip}: ${opcode}(${registers[ip + 1]}):\t\t ${registers}`);
-        op(registers[ip + 1]);
-        ip += 2;
-        break;
-      case 4:
-        // console.log(`${ip}: ${opcode}(${registers[ip + 1]}):\t\t ${registers}`);
-        return op(resolve(modes[0], ip + 1));
-      case 5:
-      case 6:
-        // console.log(`${ip}: ip = ${opcode}(${resolve(modes[0], ip + 1)}, ${resolve(modes[1], ip + 2)}):\t\t ${registers}`);
-        op(resolve(modes[0], ip + 1), resolve(modes[1], ip + 2));
-        break;
-      case 99:
-        break;
-      default:
-        throw new Error('unknown');
-    }
+class Amplifier {
+  constructor(registers, phase) {
+    this.registers = registers.slice();
+    this.inputs = [phase];
+    this.ip = 0;
   }
 
-  return registers[0];
+  exec(input) {
+    this.inputs.push(input);
+    const OPS = {
+      1: (x, y) => x + y,
+      2: (x, y) => x * y,
+      3: (x) => { this.registers[x] = this.inputs.shift(); },
+      4: x => x,
+      5: (x, y) => {
+        this.ip = x !== 0 ? y : this.ip + 3;
+      },
+      6: (x, y) => {
+        this.ip = x === 0 ? y : this.ip + 3;
+      },
+      7: (x, y) => +(x < y),
+      8: (x, y) => +(x === y),
+    };
+
+    const resolve = (mode, index) => (mode ? this.registers[index] : this.registers[this.registers[index]]);
+    let opcode;
+    let modes;
+    let ret;
+    while (opcode !== 99) {
+      [opcode, modes] = decode(this.registers[this.ip]);
+      const op = OPS[opcode];
+      switch (opcode) {
+        case 1:
+        case 2:
+        case 7:
+        case 8:
+          this.registers[this.registers[this.ip + 3]] = op(resolve(modes[0], this.ip + 1), resolve(modes[1], this.ip + 2));
+          this.ip += 4;
+          break;
+        case 3:
+          op(this.registers[this.ip + 1]);
+          this.ip += 2;
+          break;
+        case 4:
+          ret = op(resolve(modes[0], this.ip + 1));
+          this.ip += 2;
+          return ret;
+        case 5:
+        case 6:
+          op(resolve(modes[0], this.ip + 1), resolve(modes[1], this.ip + 2));
+          break;
+        case 99:
+          break;
+        default:
+          throw new Error('unknown');
+      }
+    }
+
+    return null;
+  }
 }
+
 
 function permute(set) {
   if (set.length === 1) {
@@ -84,11 +91,35 @@ function permute(set) {
 }
 
 function compute(registers, phases) {
+  const amplifiers = [];
+  _.range(0, 5).forEach((i) => {
+    amplifiers[i] = new Amplifier(registers, phases[i]);
+  });
+
   let output = 0;
   _.range(0, 5).forEach((i) => {
-    output = exec(_.clone(registers), [phases[i], output]);
+    output = amplifiers[i].exec(output);
   });
   return output;
+}
+
+function feedback(registers, phases) {
+  const amplifiers = [];
+  _.range(0, 5).forEach((i) => {
+    amplifiers[i] = new Amplifier(registers, phases[i]);
+  });
+
+  const outputs = [0];
+  while (true) {
+    for (let i = 0; i < 5; i += 1) {
+      const ret = amplifiers[i].exec(outputs[i]);
+      if (ret === null) {
+        return outputs[i];
+      }
+      outputs[(i + 1) % 5] = ret;
+    }
+  }
+  return null;
 }
 
 async function run() {
@@ -102,6 +133,16 @@ async function run() {
     }
   });
   console.log(max);
+
+  max = 0;
+  permute([9, 8, 7, 6, 5]).forEach((phases) => {
+    const signal = feedback(registers, phases);
+    if (signal > max) {
+      max = signal;
+    }
+  });
+  console.log(max);
+
 }
 
 run();
