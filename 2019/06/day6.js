@@ -1,6 +1,25 @@
 const _ = require('lodash');
 const readInput = require('../../lib/file');
 
+function path(tree, a) {
+  const s = [a];
+  const p = [];
+  while (s.length) {
+    const n = s.shift();
+    p.push(n);
+    const children = tree.get(n);
+    if (children) {
+      children.map(x => s.push(x));
+    }
+  }
+  return p;
+}
+
+function common(tree, a, b) {
+  const pathA = path(tree, a);
+  const pathB = path(tree, b);
+  return _.difference(pathA, pathB).concat(_.difference(pathB, pathA));
+}
 
 function bfs(tree) {
   let level = ['COM'];
@@ -31,9 +50,13 @@ async function run() {
   orbits.forEach(([parent, child]) => {
     add(tree, parent, child);
   });
-
-
   console.log(bfs(tree));
+
+  const rtree = new Map();
+  orbits.forEach(([parent, child]) => {
+    add(rtree, child, parent); // reverse child parent relationship
+  });
+  console.log(common(rtree, 'YOU', 'SAN').length - 2);
 }
 
 run();
