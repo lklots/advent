@@ -97,6 +97,7 @@ async function run() {
   const input = await readInput('2019/09/');
   const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
   exec(_.clone(registers), 1);
+  exec(_.clone(registers), 2);
 }
 
 run();
