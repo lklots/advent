@@ -102,7 +102,7 @@ class Intcode {
   }
 }
 
-const map = new Map();
+let map = new Map();
 
 function paint(x, y, color) {
   const current = map.get(`${x},${y}`) || 0;
@@ -130,14 +130,9 @@ function step(x, y, dir, rotate) {
   }
 }
 
-async function run() {
-  const input = await readInput('2019/11/');
-  const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
-  const comp = new Intcode(registers);
-  comp.in(0);
-
-  let x = 0;
-  let y = 0;
+function go(comp) {
+  let x = 5;
+  let y = 5;
   let dir = 0;
   let ret = null;
   const changes = new Map();
@@ -152,7 +147,32 @@ async function run() {
     [x, y, dir] = step(x, y, dir, comp.exec());
     comp.in(map.get(`${x},${y}`) || 0);
   }
+  return changes;
+}
+
+function print() {
+  const board = _.range(20).map(() => _.range(50).map(() => '.'));
+  map.forEach((v, k) => {
+    const [x, y] = k.split(',');
+    if (v) {
+      board[y][x] = '#';
+    }
+  });
+  console.log(board.map(x => x.join('')).join('\n'));
+}
+
+async function run() {
+  const input = await readInput('2019/11/');
+  const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
+  const comp = new Intcode(registers);
+  comp.in(0);
+  let changes = go(comp);
   console.log(changes.size);
+  map = new Map();
+  const comp2 = new Intcode(registers);
+  comp2.in(1);
+  changes = go(comp2);
+  print(changes);
 }
 
 run();
