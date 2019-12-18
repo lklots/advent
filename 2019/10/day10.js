@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const readInput = require('../../lib/file');
 
 function gcd(a_, b_) {
@@ -18,61 +19,78 @@ function gcd(a_, b_) {
   return b;
 }
 
-function visible(map, sta, ast) {
+function visit(map, func) {
+  for (let j = 0; j < map.length; j += 1) {
+    for (let i = 0; i < map[0].length; i += 1) {
+      func(map[j][i], [i, j]);
+    }
+  }
+}
+
+function blocking(map, sta, ast) {
   let [startX, startY] = ast;
   const distX = sta[0] - startX;
   const distY = sta[1] - startY;
   const stepX = distX / gcd(distX, distY);
   const stepY = distY / gcd(distX, distY);
 
-  // process.stdout.write(`(${startX},${startY}): d:(${distX}, ${distY}) s:(${stepX},${stepY}) => (${sta[0]},${sta[1]}) - ${gcd(distX, distY)}`);
   startX += stepX;
   startY += stepY;
+  let blocks = 0;
   while (!(startX === sta[0] && startY === sta[1])) {
     if (map[startY][startX] === '#') {
-      // console.log(` => (${startX}, ${startY})-false`);
-      return false;
+      blocks += 1;
     }
     startX += stepX;
     startY += stepY;
   }
-  // console.log('- true');
-  return true;
+  return blocks;
+}
+
+function asteroids(map) {
+  const asts = [];
+  visit(map, (thing, coord) => {
+    if (thing === '#') {
+      asts.push(coord);
+    }
+  });
+  return asts;
 }
 
 function count(map, sta) {
-  let c = 0;
-  for (let j = 0; j < map.length; j += 1) {
-    for (let i = 0; i < map[0].length; i += 1) {
-      if (map[j][i] === '#'
-        && !(i === sta[0] && j === sta[1])
-        && visible(map, sta, [i, j])) {
-        c += 1;
-      }
+  return _.sum(asteroids(map).map((ast) => {
+    if (!(ast[0] === sta[0] && ast[1] === sta[1]) && !blocking(map, sta, ast)) {
+      return 1;
     }
-  }
-  return c;
+    return 0;
+  }));
 }
 
-function max(map) {
-  let m = 0;
-  for (let j = 0; j < map.length; j += 1) {
-    for (let i = 0; i < map[0].length; i += 1) {
-      if (map[j][i] === '#') {
-        const c = count(map, [i, j]);
-        if (c > m) {
-          m = c;
-        }
-      }
-    }
-  }
-  return m;
+function mod(n, m) {
+  return ((n % m) + m) % m;
+}
+
+function angle(a, b) {
+  let rad = Math.atan2(a[1] - b[1], a[0] - b[0]);
+  rad = (rad < 0) ? rad + 2 * Math.PI : rad;
+  const deg = rad / Math.PI * 180;
+  return mod(deg - 90, 360);
+}
+
+function vaporize(map, sta) {
+  const vis = asteroids(map).filter(ast => !(ast[0] === sta[0] && ast[1] === sta[1]));
+  vis.sort((a, b) => (angle(sta, a) + blocking(map, sta, a) * 360) - (angle(sta, b) + blocking(map, sta, b) * 360));
+  return vis;
 }
 
 async function run() {
   const input = await readInput('2019/10/');
   const map = input.split('\n').map(x => x.split(''));
-  console.log(max(map));
+  const asts = asteroids(map);
+  const index = asts.reduce((iMax, coord, i, arr) => (count(map, coord) > count(map, arr[iMax]) ? i : iMax), 0);
+  console.log(count(map, asts[index]));
+  const last = vaporize(map, asts[index])[199];
+  console.log(last[0] * 100 + last[1]);
 }
 
 run();
