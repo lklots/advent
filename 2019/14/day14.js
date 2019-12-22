@@ -1,42 +1,25 @@
 const _ = require('lodash');
 const readInput = require('../../lib/file');
 
-function topoSort(graph) {
-  const visited = {};
-  const ret = [];
-
-  function dfs(u) {
-    visited[u] = true;
-    (graph[u] || []).forEach((v) => {
-      if (!visited[v]) {
-        dfs(v);
-      }
-    });
-    ret.push(u);
-  }
-
-  _.keys(graph).forEach((u) => {
-    if (!visited[u]) {
-      dfs(u);
-    }
-  });
-
-  return ret;
-}
-
-function demand(node, outputs, consumers, producers, demands) {
-  if (!producers[node]) { return 1; }
-  const sum = _.sum(producers[node].map(consumer => demands[consumer] * consumers[consumer][node]));
+function demand(node, outputs, consumers, producers, fuel) {
+  if (node === 'FUEL') { return fuel; }
+  const sum = _.sum(producers[node].map(consumer => demand(consumer, outputs, consumers, producers, fuel) * consumers[consumer][node]));
   return Math.ceil(sum / outputs[node]);
 }
 
-function part1(outputs, consumers, producers) {
-  const demands = {};
-  topoSort(producers).forEach((node) => {
-    demands[node] = demand(node, outputs, consumers, producers, demands);
-  });
+function bsearch(min, max, func, goal) {
+  if (min === max || max - min === 1) {
+    return min;
+  }
 
-  return demands.ORE;
+  const guess = Math.floor((max + min) / 2);
+  const res = func(guess);
+
+  if (res > goal) {
+    return bsearch(min, guess, func, goal);
+  }
+
+  return bsearch(guess, max, func, goal);
 }
 
 async function run() {
@@ -59,7 +42,8 @@ async function run() {
       producers[name].push(outputName);
     });
   });
-  console.log(part1(outputs, consumers, producers));
+  console.log(demand('ORE', outputs, consumers, producers, 1));
+  const goal = 1000000000000;
+  console.log(bsearch(0, goal, x => demand('ORE', outputs, consumers, producers, x), goal));
 }
-
 run();
