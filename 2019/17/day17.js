@@ -12,13 +12,16 @@ function neighbors([x, y]) {
   ];
 }
 
-function print(map, coord) {
-  const board = _.range(70).map(() => _.range(70).map(() => ' '));
-  _.map(map, (v, k) => {
-    const [x, y] = k.split(',');
-    board[y][x] = String.fromCharCode(v);
-  });
-  console.log(board.map(x => x.join('')).join('\n'));
+function video(comp) {
+  let ret;
+  let line = [];
+  do {
+    ret = comp.exec();
+    if (ret < 0 || ret > 125) {
+      return ret;
+    }
+
+  } while (ret !== null);
 }
 
 function parse(comp) {
@@ -39,6 +42,11 @@ function parse(comp) {
   return map;
 }
 
+function line(comp, l) {
+  _.map(l, (_x, i) => comp.in(l.charCodeAt(i)));
+  comp.in(10);
+}
+
 async function run() {
   const input = await readInput('2019/17/');
   const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
@@ -50,9 +58,17 @@ async function run() {
       return x * y;
     }
     return 0;
-  })
-
+  });
   console.log(_.sum(inters));
+
+  registers[0] = 2;
+  const comp2 = new Intcode(registers);
+  line(comp2, ['A', 'C', 'A', 'C', 'B', 'B', 'C', 'A', 'C', 'B'].join(',')); // main
+  line(comp2, ['L', 12, 'L', 10, 'R', 8, 'L', 12].join(','));
+  line(comp2, ['L', 10, 'R', 12, 'R', 8].join(','));
+  line(comp2, ['R', 8, 'R', 10, 'R', 12].join(','));
+  line(comp2, 'y');
+  console.log(video(comp2));
 }
 
 run();
