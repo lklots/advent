@@ -16,12 +16,29 @@ function moves(node, teleports) {
   return ports.concat(neighbors(node).filter(([a, b]) => map[b][a] === '.'));
 }
 
-function key([x, y]) {
-  return `${x},${y}`;
+function isOutsidePort([x, y]) {
+  return y === 2 || y === map.length - 3 || x === 2 || x === map[2].length - 1;
 }
 
-function unkey(s) {
-  return s.split(',');
+function rmovesHelper(node, teleports) {
+  const [level, x, y] = node;
+  const mvs = neighbors([x, y]).map(([a, b]) => [level, a, b]);
+  if (!teleports[key([x, y])]) {
+    return mvs;
+  }
+  const p = teleports[key([x, y])];
+  if (level === 0) {
+    return mvs.concat(isOutsidePort([x, y]) ? [] : [[level + 1, p[0], p[1]]]);
+  }
+  return mvs.concat(isOutsidePort([x, y]) ? [[level - 1, p[0], p[1]]] : [[level + 1, p[0], p[1]]]);
+}
+
+function rmoves(node, teleports) {
+  return rmovesHelper(node, teleports).filter(([, a, b]) => map[b][a] === '.');
+}
+
+function key(k) {
+  return JSON.stringify(k);
 }
 
 function port([x, y]) {
@@ -35,13 +52,13 @@ function port([x, y]) {
   };
 }
 
-function bfs(start, end, teleports) {
+function bfs(start, end, movesFunc) {
   const q = [start];
   const visited = { [key(start)]: true };
   const depth = { [key(start)]: 0 };
   while (q.length) {
     const step = q.shift();
-    const mvs = moves(step, teleports);
+    const mvs = movesFunc(step);
     for (let i = 0; i < mvs.length; i += 1) {
       const n = mvs[i];
       if (key(end) === key(step)) {
@@ -91,6 +108,9 @@ async function run() {
   const input = await readInput('2019/20/');
   map = input.split('\n').map(x => x.split(''));
   const { start, end, teleports } = init();
-  console.log(bfs(start, end, teleports));
+  console.log(bfs(start, end, step => moves(step, teleports)));
+  start.unshift(0);
+  end.unshift(0);
+  console.log(bfs(start, end, step => rmoves(step, teleports)));
 }
 run();
