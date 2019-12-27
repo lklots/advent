@@ -28,25 +28,45 @@ function readLine(comp) {
   return l.join('');
 }
 
+function droid(comp, instructions) {
+  instructions.forEach(i => writeLine(comp, i));
+  let l;
+  do {
+    l = readLine(comp);
+    console.log(l);
+  } while (l !== null && _.isString(l));
+  return l;
+}
+
 async function run() {
   const input = await readInput('2019/21/');
   const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
-  const comp = new Intcode(registers);
   const instructions = [
-    'NOT A J',
     'OR B T',
     'AND C T',
     'NOT T T',
     'AND D T',
     'OR T J',
+    'NOT A T',
+    'OR T J',
     'WALK',
   ];
-  instructions.forEach(i => writeLine(comp, i));
-  let l;
-  do {
-    l = readLine(comp);
-  } while (l !== null && _.isString(l));
-  console.log(l);
+  console.log(droid(new Intcode(registers), instructions));
+
+  const instructions2 = [
+    'NOT B T',
+    'AND D T',
+    'AND H T',
+    'NOT C J',
+    'AND D J',
+    'AND H J',
+    'OR T J',
+    'NOT A T',
+    'OR T J',
+    'RUN',
+  ];
+  console.log(droid(new Intcode(registers), instructions2));
+
 }
 
 run();
