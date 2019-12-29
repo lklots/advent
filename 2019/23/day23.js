@@ -110,26 +110,47 @@ class Intcode {
   }
 }
 
+function loop(computers) {
+  for (let i = 0; i < computers.length; i += 1) {
+    const comp = computers[i];
+    const index = comp.exec().next().value;
+    if (index !== -1) {
+      const [x, y] = [comp.exec().next().value, comp.exec().next().value];
+      return [index, x, y];
+    }
+  }
+  return [false];
+}
+
 async function run() {
   const input = await readInput('2019/23/');
   const registers = _.flatMap(input.split('\n'), x => x.split(',').map(y => parseInt(y, 10)));
   const computers = _.range(50).map(() => new Intcode(registers));
   computers.forEach((c, i) => c.in(i));
+  let nat = false;
+  let lastNat;
+  let isIdle = false;
   while (true) {
-    for (let i = 0; i < computers.length; i += 1) {
-      const comp = computers[i];
-      const index = comp.exec().next().value;
-      if (index !== -1) {
-        const [x, y] = [comp.exec().next().value, comp.exec().next().value];
-        if (index === 255) {
-          console.log(y);
-          return y;
-        }
-        computers[index].in(x);
-        computers[index].in(y);
+    const [index, x, y] = loop(computers);
+    if (index === false) {
+      if (_.isEqual(nat, lastNat)) {
+        return nat[1];
       }
+      if (nat && isIdle) {
+        computers[0].in(nat[0]);
+        computers[0].in(nat[1]);
+      }
+      isIdle = true;
+    } else if (index === 255) {
+      lastNat = nat;
+      nat = [x, y];
+      isIdle = false;
+    } else {
+      computers[index].in(x);
+      computers[index].in(y);
+      isIdle = false;
     }
   }
 }
 
-run();
+run().then(x => console.log(x));
