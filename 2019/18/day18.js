@@ -96,11 +96,7 @@ function pathLength(map, path) {
   return gotomem(map, coord, path[0][0]) + pathLength(map, path);
 }
 
-async function run() {
-  const input = await readInput('2019/18/');
-  const tiles = _.map(input.split('\n'), x => x.split(''));
-  const map = {};
-  tiles.forEach((v, i) => v.forEach((w, j) => map[`${j},${i}`] = w));
+function part1(map) {
   const start = toCoord(_.findKey(map, x => x === '@'));
   const allKeys = _.values(map).filter(k => k.match(/[a-z]/));
   const path = astar([start, []],
@@ -108,7 +104,52 @@ async function run() {
     ([coord, keys]) => reachable(map, coord, keys).map(k => [getCoord(map, k), keys.concat([k]).sort()]),
     ([coord1], [coord2]) => gotomem(map, coord1, coord2),
   );
-  console.log(path);
   console.log(pathLength(map, path));
+}
+
+function moves(map, starts, keys) {
+  const mvs = [];
+  for (let i = 0; i < starts.length; i += 1) {
+    const coord = starts[i];
+    const ks = reachable(map, coord, keys);
+    ks.forEach((k) => {
+      mvs.push([
+        starts.slice(0, i).concat([getCoord(map, k)]).concat(starts.slice(i + 1, starts.length)),
+        keys.concat([k]).sort(),
+      ]);
+    });
+  }
+  return mvs;
+}
+
+function pathLength2(map, path) {
+  const [coords] = path.shift();
+  if (path.length === 0) {
+    return 0;
+  }
+  return distance(map, coords, path[0][0]) + pathLength2(map, path);
+}
+
+function distance(map, coords1, coords2) {
+  return _.zip(coords1, coords2).reduce((total, [coord1, coord2]) => total + gotomem(map, coord1, coord2), 0);
+}
+
+function part2(map) {
+  const starts = _.toPairs(map).filter(([, v]) => v === '@').map(x => toCoord(x[0]));
+  const allKeys = _.values(map).filter(k => k.match(/[a-z]/));
+  const path = astar([starts, []],
+    ([, keys]) => (allKeys.length === keys.length ? 0 : 1),
+    ([coords, keys]) => moves(map, coords, keys),
+    ([coords1], [coords2]) => distance(map, coords1, coords2),
+  );
+  console.log(pathLength2(map, path));
+}
+
+async function run() {
+  const input = await readInput('2019/18/');
+  const tiles = _.map(input.split('\n'), x => x.split(''));
+  const map = {};
+  tiles.forEach((v, i) => v.forEach((w, j) => map[`${j},${i}`] = w));
+  part2(map);
 }
 run();
