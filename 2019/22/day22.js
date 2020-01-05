@@ -1,12 +1,33 @@
 const _ = require('lodash');
 const readInput = require('../../lib/file');
 
+function inverse(a, n) {
+  let t = 0;
+  let newt = 1;
+  let r = n;
+  let newr = a;
+
+  while (newr !== 0) {
+    const quotient = Math.floor(r / newr);
+    [t, newt] = [newt, t - quotient * newt];
+    [r, newr] = [newr, r - quotient * newr];
+  }
+
+  if (r > 1) {
+    throw Error("a is not invertible");
+  }
+  if (t < 0) {
+    t += n;
+  }
+
+  return t;
+}
 function mod(n, m) {
   return ((n % m) + m) % m;
 }
 
 function dealir(length, i) {
-  return (length - 1 - i) % length;
+  return (-(i + 1)) % length;
 }
 
 function cutir(length, i, n) {
@@ -14,10 +35,20 @@ function cutir(length, i, n) {
 }
 
 function incrementir(length, i, n) {
-  console.log(`${i},${n},${length} => ${(i * (length - n + 1)) % length}`);
-  return (i * (length - n)) % length;
+  return (i * inverse(n, length)) % length;
 }
 
+function deali(length, i) {
+  return mod(-i - 1, length);
+}
+
+function cuti(length, i, n) {
+  return mod(i - n, length);
+}
+
+function incrementi(length, i, n) {
+  return (i * n) % length;
+}
 
 function cut(deck, num) {
   if (num >= 0) {
@@ -42,8 +73,7 @@ function deal(deck) {
 }
 
 async function run() {
-  // const DECK = 10007;
-  const DECK = 10;
+  const DECK = 10007;
   const input = await readInput('2019/22/');
   const instructions = input.split('\n').map((line) => {
     if (line.match(/cut/)) {
@@ -56,38 +86,62 @@ async function run() {
       return d => deal(d);
     }
   });
-  let newdeck = _.range(11);
-
-  console.log(newdeck);
-  newdeck = increment(newdeck, 5);
-  console.log(newdeck);
-  console.log(increment(newdeck, ));
-  console.log(_.isEqual(_.range(10), increment(newdeck, 3)));
-  console.log('END');
-
   let deck = _.range(DECK);
   deck = instructions.reduce((d, fn) => fn(d), deck);
-  console.log(deck);
-  console.log(`part1: ${_.findIndex(deck, x => x === 2019)}`);
+  deck = instructions.reduce((d, fn) => fn(d), deck);
+  deck = instructions.reduce((d, fn) => fn(d), deck);
 
-  const instructions2 = input.split('\n').map((line) => {
+  console.log(`part1: ${_.findIndex(deck, x => x === 2019)}`);
+  console.log(`part2: ${deck[2019]}`);
+  let a = 0;
+  let b = 1;
+  let sign = 1;
+  const instructions2 = input.split('\n').reverse().map((line) => {
     if (line.match(/cut/)) {
-      return (l, i) => cutir(l, i, parseInt(line.match(/(-?[0-9]+)/)[1], 10));
+      const n = parseInt(line.match(/(-?[0-9]+)/)[1], 10);
+      a += n;
+      a = mod(a, DECK);
+      return (l, i) => cutir(l, i, n);
     }
     if (line.match(/increment/)) {
-      return (l, i) => incrementir(l, i, parseInt(line.match(/([0-9]+)/)[1], 10));
+      const n = parseInt(line.match(/([0-9]+)/)[1], 10);
+      b *= inverse(n, DECK);
+      a *= inverse(n, DECK);
+      a = mod(a, DECK);
+      b = mod(b, DECK);
+      return (l, i) => incrementir(l, i, n);
     }
     if (line.match(/new/)) {
+      a += 1;
+      a *= -1;
+      sign *= -1;
       return (l, i) => dealir(l, i);
     }
   });
-  instructions2.reverse();
-  let ret = 1;
-  //for (let i = 0; i < 101741582076661; i += 1) {
-  ret = instructions2.reduce((i, fn) => fn(DECK, i), ret);
-  //}
-  console.log(ret);
-  console.log(_.range(DECK).map((fromIndex) => instructions2.reduce((i, fn) => fn(DECK, i), fromIndex)));
+  console.log(mod((sign * (mod(b, DECK)) ** 3) * 2019 + mod(a, DECK) * geometricMod(b, 3, DECK), DECK));
 }
+
+function geometric(r, n) {
+  return ((r ** n) - 1) / (r - 1);
+}
+
+function geometricMod(r, n, m) {
+  return ((expAndMod(r, n, m) - 1) * inverse(r - 1, m)) % m;
+}
+
+function expAndMod(r, n, m) {
+  if (n === 0) {
+    return 1;
+  }
+  if (n === 1) {
+    return r % m;
+  }
+
+  if (n % 2 === 0) {
+    return expAndMod((r % m) * (r % m), n / 2, m);
+  }
+  return ((r % m) * expAndMod((r % m) * (r % m), (n - 1) / 2, m)) % m;
+}
+
 
 run();
