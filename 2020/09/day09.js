@@ -20,7 +20,7 @@ function range(nums, total) {
     }
   }
 
-  return nums[i] + nums[j];
+  return Math.min(...nums.slice(i, j)) + Math.max(...nums.slice(i, j));
 }
 
 async function run() {
