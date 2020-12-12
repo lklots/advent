@@ -17,7 +17,8 @@
   },
   "homepage": "https://github.com/lklots/advent#readme",
   "dependencies": {
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.11",
+    "mathjs": "^8.1.0"
   },
   "devDependencies": {
     "eslint": "^5.11.1",
